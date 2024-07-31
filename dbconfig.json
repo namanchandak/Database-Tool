@@ -1,0 +1,17 @@
+{
+    "tables": {
+      "empt": [
+        {
+          "table": "salaryt",
+          "commonAttributes": ["id"]
+        }
+      ],
+      "salaryt": [
+        {
+          "table": "empt",
+          "commonAttributes": ["empId"]
+        }
+      ]
+    }
+  }
+  
