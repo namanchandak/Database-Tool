@@ -34,6 +34,27 @@
             "commonAttributes": ["salId"]
         }
       ]
+      ,
+      "fund":[
+        {
+            "table": "empt",
+            "commonAttributes": ["empId"]
+        },
+        {
+            "table": "manager",
+            "commonAttributes": ["fundId"]
+        }
+      ],
+      "manager":[
+        {
+            "table": "deptt",
+            "commonAttributes": ["dName"]
+        },
+        {
+            "table": "fund",
+            "commonAttributes": ["fundId"]
+        }
+      ]
     }
   }
   

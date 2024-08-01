@@ -14,11 +14,6 @@ app.get("/", (req, res) => {
     res.send("Server running on port 8080");
 });
 
-// SELECT salaryt.salId, empt.name, empt.id  FROM empt  LEFT JOIN salaryt ON empt.id = salaryt.empId
-// SELECT empt.name, empt.id, salaryt.salId FROM empt LEFT JOIN salaryt ON empt.id = salaryt.empId
-
-
-// SELECT empt.name, empt.id, salaryt.salId FROM empt LEFT JOIN salaryt ON empt.id = salaryt.salaryt.empId
 
 // SELECT empt.id, empt.name, salaryt.salId, salaryt.empId FROM empt LEFT JOIN salaryt ON empt.id = salaryt.id
 
@@ -38,12 +33,12 @@ try {
 app.post('/join', async (req, res) => {
     const { selectColumns } = req.body;
   
-    if (!selectColumns) {
-      return res.status(400).send('Missing required field: selectColumns');
+    if (!selectColumns || !Array.isArray(selectColumns)) {
+      return res.status(400).send('Missing or invalid required field: selectColumns');
     }
   
     // Extract table names from selectColumns
-    const tableNames = Array.from(new Set(selectColumns.match(/\w+(?=\.)/g)));
+    const tableNames = Array.from(new Set(selectColumns.map(col => col.split('.')[0])));
   
     if (!tableNames.length) {
       return res.status(400).send('No valid table names found in selectColumns');
@@ -51,7 +46,7 @@ app.post('/join', async (req, res) => {
   
     // Start building the query
     let baseTable = tableNames[0];
-    let query = `SELECT ${selectColumns} FROM ${baseTable}`;
+    let query = `SELECT ${selectColumns.join(', ')} FROM ${baseTable}`;
     let usedTables = new Set([baseTable]);
   
     // Function to find and add join conditions recursively
@@ -70,8 +65,8 @@ app.post('/join', async (req, res) => {
           addJoins(relationship.table); // Recursively add joins for the new table
         }
       });
-    };
-
+    };    
+    
     // SELECT empt.id, empt.name, salaryt.salId, salaryt.empId FROM empt LEFT JOIN salaryt ON empt.id = salaryt.id
   
     addJoins(baseTable);
@@ -87,3 +82,8 @@ app.post('/join', async (req, res) => {
     }
   });
   
+
+
+//   SELECT empt.empId, empt.name, salaryt.salId, salaryt.empId, amountt.salId, amountt.amount, deptt.salId FROM empt LEFT 
+// JOIN salaryt ON empt.empId = salaryt.empId LEFT JOIN deptt ON salaryt.salId = deptt.salId
+//  LEFT JOIN amountt ON salaryt.salId = amountt.salId
