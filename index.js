@@ -20,6 +20,9 @@ app.get("/", (req, res) => {
 
 // SELECT empt.name, empt.id, salaryt.salId FROM empt LEFT JOIN salaryt ON empt.id = salaryt.salaryt.empId
 
+// SELECT empt.id, empt.name, salaryt.salId, salaryt.empId FROM empt LEFT JOIN salaryt ON empt.id = salaryt.id
+
+
 
 const configPath = path.join(__dirname, 'dbconfig.json');
 let config;
@@ -28,6 +31,9 @@ try {
 } catch (err) {
   console.error('Error reading config file:', err);
 }
+
+
+
 
 app.post('/join', async (req, res) => {
     const { selectColumns } = req.body;
@@ -46,22 +52,29 @@ app.post('/join', async (req, res) => {
     // Start building the query
     let baseTable = tableNames[0];
     let query = `SELECT ${selectColumns} FROM ${baseTable}`;
+    let usedTables = new Set([baseTable]);
   
-    // Add LEFT JOINs based on the configuration
-    tableNames.slice(1).forEach(tableName => {
-      const relationship = config.tables[baseTable]?.find(rel => rel.table === tableName);
-      if (relationship) {
-        const onClause = relationship.commonAttributes.map(attr => {
-          // Handle both directions of the relationship
-          const baseTableAttr = baseTable + '.' + attr;
-          const joinTableAttr = tableName + '.' + (relationship.commonAttributes[0] === 'id' ? 'empId' : attr);
-          return `${baseTableAttr} = ${joinTableAttr}`;
-        }).join(' AND ');
-        
-        query += ` LEFT JOIN ${tableName} ON ${onClause}`;
-      }
-    });
-    // query = 'SELECT empt.name, empt.id, salaryt.salId FROM empt LEFT JOIN salaryt ON empt.id = salaryt.empId'
+    // Function to find and add join conditions recursively
+    const addJoins = (currentTable) => {
+      config.tables[currentTable]?.forEach(relationship => {
+        if (!usedTables.has(relationship.table) && tableNames.includes(relationship.table)) {
+          usedTables.add(relationship.table);
+  
+          const onClause = relationship.commonAttributes.map(attr => {
+            const currentTableAttr = `${currentTable}.${attr}`;
+            const joinTableAttr = `${relationship.table}.${attr}`;
+            return `${currentTableAttr} = ${joinTableAttr}`;
+          }).join(' AND ');
+  
+          query += ` LEFT JOIN ${relationship.table} ON ${onClause}`;
+          addJoins(relationship.table); // Recursively add joins for the new table
+        }
+      });
+    };
+
+    // SELECT empt.id, empt.name, salaryt.salId, salaryt.empId FROM empt LEFT JOIN salaryt ON empt.id = salaryt.id
+  
+    addJoins(baseTable);
   
     console.log('Constructed Query:', query);
   
@@ -73,3 +86,4 @@ app.post('/join', async (req, res) => {
       res.status(500).send('An error occurred while fetching data');
     }
   });
+  

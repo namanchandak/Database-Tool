@@ -3,13 +3,35 @@
       "empt": [
         {
           "table": "salaryt",
-          "commonAttributes": ["id"]
+          "commonAttributes": ["empId"]
         }
       ],
       "salaryt": [
         {
           "table": "empt",
           "commonAttributes": ["empId"]
+        },
+        {
+            "table": "deptt",
+            "commonAttributes": ["salId"]
+        },
+        {
+            "table": "amountt",
+            "commonAttributes": ["salId"]
+          }
+        
+      ],
+      "deptt":[
+        {
+            "table": "salaryt",
+            "commonAttributes": ["salId"]
+        }
+      ]
+      ,
+      "amountt":[
+        {
+            "table": "salaryt",
+            "commonAttributes": ["salId"]
         }
       ]
     }
