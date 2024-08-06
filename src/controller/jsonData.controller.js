@@ -1,32 +1,23 @@
 const connection = require('../config/config');
 
 const getJsonData = async (req, res) => {
-    const { empId, detailType, specificField } = req.body;
+    const { empId, detail } = req.body;
 
-    if (!empId || !detailType) {
-        return res.status(400).send({ error: 'empId and detailType are required' });
+    if (!empId) {
+        return res.status(400).send({ error: 'empId is required' });
     }
 
     try {
         let query;
         let selectFields = [];
 
-        // Determine the SELECT fields based on the detailType and specificField
-        if (detailType === 'all') {
-            selectFields.push('jData');
-        } else if (detailType === 'contact') {
-            if (specificField === 'phone') {
-                selectFields.push("JSON_UNQUOTE(JSON_EXTRACT(jData, '$.contact.phone')) AS phone");
-            } else if (specificField === 'email') {
-                selectFields.push("JSON_UNQUOTE(JSON_EXTRACT(jData, '$.contact.email')) AS email");
-            } else {
-                selectFields.push("JSON_UNQUOTE(JSON_EXTRACT(jData, '$.contact.phone')) AS phone");
-                selectFields.push("JSON_UNQUOTE(JSON_EXTRACT(jData, '$.contact.email')) AS email");
-            }
-        } else if (detailType === 'name') {
-            selectFields.push("JSON_UNQUOTE(JSON_EXTRACT(jData, '$.name')) AS name");
+        // Determine the SELECT fields based on the detail
+        if (detail) {
+            // Ensure the detail path is correctly formatted for SQL
+            const jsonPath = detail.startsWith('$.') ? detail : `$.${detail}`;
+            selectFields.push(`JSON_UNQUOTE(JSON_EXTRACT(jData, '${jsonPath}')) AS detail`);
         } else {
-            return res.status(400).send({ error: 'Invalid detailType provided' });
+            selectFields.push('jData');
         }
 
         // Construct the SQL query dynamically
@@ -42,27 +33,28 @@ const getJsonData = async (req, res) => {
         if (results.length > 0) {
             let responseData;
 
-            // Handle data based on detailType
-            if (detailType === 'all') {
-                try {
-                    // Log the raw data for debugging
-                    console.log('Raw jData:', results[0].jData);
-
-                    // Parse JSON data
-                    responseData = JSON.parse(results[0].jData);
-                } catch (error) {
-                    console.error('Error parsing JSON data:', error.message);
-                    return res.status(500).send({ error: 'Error parsing JSON data' });
-                }
-            } else if (detailType === 'contact') {
-                // Create responseData based on available fields
-                responseData = {};
-                if (results[0].phone) responseData.phone = results[0].phone;
-                if (results[0].email) responseData.email = results[0].email;
-            } else if (detailType === 'name') {
+            if (detail) {
+                // If detail is requested, return it
                 responseData = {
-                    name: results[0].name
+                    detail: results[0].detail
                 };
+            } else {
+                // If no detail is requested, return the entire JSON data
+                // Check if jData is an object, no need to parse
+                const jData = results[0].jData;
+                if (typeof jData === 'object') {
+                    responseData = jData;
+                } else if (typeof jData === 'string') {
+                    try {
+                        responseData = JSON.parse(jData);
+                    } catch (error) {
+                        console.error('Error parsing JSON data:', error.message);
+                        return res.status(500).send({ error: 'Error parsing JSON data' });
+                    }
+                } else {
+                    console.error('jData is not a valid type:', jData);
+                    return res.status(500).send({ error: 'Unexpected data type for jData' });
+                }
             }
 
             res.json(responseData);
