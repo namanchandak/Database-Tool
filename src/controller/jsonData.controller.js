@@ -9,36 +9,28 @@ const getJsonData = async (req, res) => {
 
     try {
         let query;
+        let selectFields = [];
 
-        // Determine the query based on the detailType
+        // Determine the SELECT fields based on the detailType and specificField
         if (detailType === 'all') {
-            query = 'SELECT jData FROM empt WHERE empId = ?';
+            selectFields.push('jData');
         } else if (detailType === 'contact') {
             if (specificField === 'phone') {
-                query = `
-                    SELECT JSON_UNQUOTE(JSON_EXTRACT(jData, '$.contact.phone')) AS phone 
-                    FROM empt 
-                    WHERE empId = ?`;
+                selectFields.push("JSON_UNQUOTE(JSON_EXTRACT(jData, '$.contact.phone')) AS phone");
             } else if (specificField === 'email') {
-                query = `
-                    SELECT JSON_UNQUOTE(JSON_EXTRACT(jData, '$.contact.email')) AS email 
-                    FROM empt 
-                    WHERE empId = ?`;
+                selectFields.push("JSON_UNQUOTE(JSON_EXTRACT(jData, '$.contact.email')) AS email");
             } else {
-                query = `
-                    SELECT JSON_UNQUOTE(JSON_EXTRACT(jData, '$.contact.phone')) AS phone, 
-                           JSON_UNQUOTE(JSON_EXTRACT(jData, '$.contact.email')) AS email 
-                    FROM empt 
-                    WHERE empId = ?`;
+                selectFields.push("JSON_UNQUOTE(JSON_EXTRACT(jData, '$.contact.phone')) AS phone");
+                selectFields.push("JSON_UNQUOTE(JSON_EXTRACT(jData, '$.contact.email')) AS email");
             }
         } else if (detailType === 'name') {
-            query = `
-                SELECT JSON_UNQUOTE(JSON_EXTRACT(jData, '$.name')) AS name 
-                FROM empt 
-                WHERE empId = ?`;
+            selectFields.push("JSON_UNQUOTE(JSON_EXTRACT(jData, '$.name')) AS name");
         } else {
             return res.status(400).send({ error: 'Invalid detailType provided' });
         }
+
+        // Construct the SQL query dynamically
+        query = `SELECT ${selectFields.join(', ')} FROM empt WHERE empId = ?`;
 
         // Print the constructed query and parameters
         console.log('Executing Query:', query);
@@ -52,23 +44,21 @@ const getJsonData = async (req, res) => {
 
             // Handle data based on detailType
             if (detailType === 'all') {
-                // Directly use the object if already parsed
-                responseData = results[0].jData;
-            } else if (detailType === 'contact') {
-                if (specificField === 'phone') {
-                    responseData = {
-                        phone: results[0].phone
-                    };
-                } else if (specificField === 'email') {
-                    responseData = {
-                        email: results[0].email
-                    };
-                } else {
-                    responseData = {
-                        phone: results[0].phone,
-                        email: results[0].email
-                    };
+                try {
+                    // Log the raw data for debugging
+                    console.log('Raw jData:', results[0].jData);
+
+                    // Parse JSON data
+                    responseData = JSON.parse(results[0].jData);
+                } catch (error) {
+                    console.error('Error parsing JSON data:', error.message);
+                    return res.status(500).send({ error: 'Error parsing JSON data' });
                 }
+            } else if (detailType === 'contact') {
+                // Create responseData based on available fields
+                responseData = {};
+                if (results[0].phone) responseData.phone = results[0].phone;
+                if (results[0].email) responseData.email = results[0].email;
             } else if (detailType === 'name') {
                 responseData = {
                     name: results[0].name
