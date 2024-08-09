@@ -14,17 +14,28 @@ const whereClause = async (req, res) => {
         try {
             // Construct the WHERE clause
             const whereClauses = conditions.map(({ logic, field, operator, value }, index) => {
-                if (!field || !operator || value === undefined) {
+                if (!field || !operator || (operator === 'BETWEEN' && !Array.isArray(value)) || value === undefined) {
                     throw new Error('Invalid condition format');
                 }
 
-                const clause = `${field} ${operator} ?`;
+                let clause;
+                if (operator === 'BETWEEN') {
+                    clause = `${field} ${operator} ? AND ?`;
+                } else {
+                    clause = `${field} ${operator} ?`;
+                }
 
                 // Add logic operator (AND/OR) before each condition except the first one
                 return index > 0 ? `${logic} ${clause}` : clause;
             }).join(' ');
 
-            const values = conditions.map(condition => condition.value);
+            // Flatten the values for the prepared statement
+            const values = conditions.flatMap(condition => {
+                if (condition.operator === 'BETWEEN') {
+                    return condition.value; // Return both lower and upper bound for BETWEEN
+                }
+                return condition.value;
+            });
 
             // Construct the complete query
             const query = `SELECT * FROM \`${tableName}\` WHERE ${whereClauses}`;
