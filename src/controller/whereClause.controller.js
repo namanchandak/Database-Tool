@@ -13,12 +13,16 @@ const whereClause = async (req, res) => {
 
         try {
             // Construct the WHERE clause
-            const whereClauses = conditions.map(({ field, operator, value }) => {
+            const whereClauses = conditions.map(({ logic, field, operator, value }, index) => {
                 if (!field || !operator || value === undefined) {
                     throw new Error('Invalid condition format');
                 }
-                return `${field} ${operator} ?`;
-            }).join(' AND ');
+
+                const clause = `${field} ${operator} ?`;
+
+                // Add logic operator (AND/OR) before each condition except the first one
+                return index > 0 ? `${logic} ${clause}` : clause;
+            }).join(' ');
 
             const values = conditions.map(condition => condition.value);
 
