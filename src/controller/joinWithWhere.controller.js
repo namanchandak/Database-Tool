@@ -60,15 +60,18 @@ const joinWithWhere = async (req, res) => {
     addJoins(baseTable);
 
     // Apply WHERE condition if provided
-    if (whereCondition && typeof whereCondition === 'object') {
+    if (whereCondition && Array.isArray(whereCondition)) {
 
-        const whereClauses = whereCondition.map(({ logic, field, operator, value }, index) => {
-            if (!field || !operator || (operator === 'BETWEEN' && !Array.isArray(value)) || value === undefined) {
+        const whereClauses = whereCondition.map(({ logic, field, operator, value, tableValue }, index) => {
+            if (!field || !operator || (!tableValue && value === undefined)) {
                 throw new Error('Invalid condition format');
             }
 
             let clause;
-            if (operator === 'BETWEEN') {
+            if (tableValue) {
+                // Use tableValue directly for column-to-column comparison
+                clause = `${field} ${operator} ${tableValue}`;
+            } else if (operator === 'BETWEEN' && Array.isArray(value)) {
                 clause = `${field} ${operator} ? AND ?`;
             } else {
                 clause = `${field} ${operator} ?`;
@@ -78,12 +81,12 @@ const joinWithWhere = async (req, res) => {
             return index > 0 ? `${logic} ${clause}` : clause;
         }).join(' ');
 
-        // Flatten the values for the prepared statement
-        const whereValues = whereCondition.flatMap(condition => {
-            if (condition.operator === 'BETWEEN') {
-                return condition.value; // Return both lower and upper bound for BETWEEN
+        // Flatten the values for the prepared statement (only for non-tableValue references)
+        const whereValues = whereCondition.flatMap(({ value, tableValue }) => {
+            if (tableValue) {
+                return []; // Skip tableValue as it's used directly in the query
             }
-            return condition.value;  // This line was incorrect in your original code
+            return value;
         });
 
         query += ` WHERE ${whereClauses}`;

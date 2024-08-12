@@ -12,6 +12,10 @@
         {
             "table": "resource",
             "commonAttributes": ["empId"]
+        },
+        {
+            "table": "joint",
+            "commonAttributes": ["empId"]
         }
       ],
       "salaryt": [
@@ -81,6 +85,12 @@
         {
           "table": "resource",
           "commonAttributes": ["rId", "usedAt"]
+        }
+      ],
+      "joint":[
+        {
+            "table": "empt",
+            "commonAttributes": ["empId"]
         }
       ]
     }
