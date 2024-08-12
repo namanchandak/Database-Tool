@@ -63,7 +63,7 @@ const joinWithWhere = async (req, res) => {
     if (whereCondition && Array.isArray(whereCondition)) {
 
         const whereClauses = whereCondition.map(({ logic, field, operator, value, tableValue }, index) => {
-            if (!field || !operator || (!tableValue && value === undefined)) {
+            if (!field || !operator || (!tableValue && value === undefined && (operator !== 'IS NULL' && operator !== 'IS NOT NULL'))) {
                 throw new Error('Invalid condition format');
             }
 
@@ -71,20 +71,26 @@ const joinWithWhere = async (req, res) => {
             if (tableValue) {
                 // Use tableValue directly for column-to-column comparison
                 clause = `${field} ${operator} ${tableValue}`;
-            } else if (operator === 'BETWEEN' && Array.isArray(value)) {
-                clause = `${field} ${operator} ? AND ?`;
+            } else if (operator.toUpperCase() === 'BETWEEN' && Array.isArray(value)) {
+                clause = `${field} ${operator.toUpperCase()} ? AND ?`;
+            } else if (operator.toUpperCase() === 'IS NULL' || operator.toUpperCase() === 'IS NOT NULL') {
+                // Handle IS NULL and IS NOT NULL operators without placeholders
+                clause = `${field} ${operator.toUpperCase()}`;
             } else {
-                clause = `${field} ${operator} ?`;
+                clause = `${field} ${operator.toUpperCase()} ?`;
             }
 
             // Add logic operator (AND/OR) before each condition except the first one
-            return index > 0 ? `${logic} ${clause}` : clause;
+            return index > 0 ? `${logic.toUpperCase()} ${clause}` : clause;
         }).join(' ');
 
         // Flatten the values for the prepared statement (only for non-tableValue references)
-        const whereValues = whereCondition.flatMap(({ value, tableValue }) => {
-            if (tableValue) {
-                return []; // Skip tableValue as it's used directly in the query
+        const whereValues = whereCondition.flatMap(({ value, tableValue, operator }) => {
+            if (tableValue || operator.toUpperCase() === 'IS NULL' || operator.toUpperCase() === 'IS NOT NULL') {
+                return []; // Skip tableValue and NULL checks as they don't require placeholders
+            }
+            if (operator.toUpperCase() === 'BETWEEN') {
+                return value; // Handle BETWEEN with two values
             }
             return value;
         });
