@@ -13,6 +13,7 @@ try {
 }
 
 const joinWithWhere = async (req, res) => {
+
     const { selectColumns, whereCondition } = req.body;
 
     if (!selectColumns || !Array.isArray(selectColumns)) {
@@ -60,8 +61,31 @@ const joinWithWhere = async (req, res) => {
 
     // Apply WHERE condition if provided
     if (whereCondition && typeof whereCondition === 'object') {
-        const whereClauses = Object.keys(whereCondition).map(key => `${key} = ?`).join(' AND ');
-        const whereValues = Object.values(whereCondition);
+
+        const whereClauses = whereCondition.map(({ logic, field, operator, value }, index) => {
+            if (!field || !operator || (operator === 'BETWEEN' && !Array.isArray(value)) || value === undefined) {
+                throw new Error('Invalid condition format');
+            }
+
+            let clause;
+            if (operator === 'BETWEEN') {
+                clause = `${field} ${operator} ? AND ?`;
+            } else {
+                clause = `${field} ${operator} ?`;
+            }
+
+            // Add logic operator (AND/OR) before each condition except the first one
+            return index > 0 ? `${logic} ${clause}` : clause;
+        }).join(' ');
+
+        // Flatten the values for the prepared statement
+        const whereValues = whereCondition.flatMap(condition => {
+            if (condition.operator === 'BETWEEN') {
+                return condition.value; // Return both lower and upper bound for BETWEEN
+            }
+            return condition.value;  // This line was incorrect in your original code
+        });
+
         query += ` WHERE ${whereClauses}`;
 
         // Log the final query for debugging
