@@ -12,33 +12,53 @@ const whereClause = async (req, res) => {
         const connection = await pool.getConnection();
 
         try {
-            // Construct the WHERE clause
-            const whereClauses = conditions.map(({ logic, field, operator, value }, index) => {
-                if (!field || !operator || (operator === 'BETWEEN' && !Array.isArray(value)) || value === undefined) {
-                    throw new Error('Invalid condition format');
-                }
+            // Function to recursively build the WHERE clause
+            const buildWhereClause = (conds) => {
+                return conds.map(({ logic, field, operator, value, conditions }, index) => {
+                    if (conditions) {
+                        // Recursively handle nested conditions with parentheses
+                        const nestedClause = buildWhereClause(conditions);
+                        return index > 0 ? `${logic} (${nestedClause})` : `(${nestedClause})`;
+                    }
 
-                let clause;
-                if (operator === 'BETWEEN') {
-                    clause = `${field} ${operator} ? AND ?`;
-                } else {
-                    clause = `${field} ${operator} ?`;
-                }
+                    if (!field || !operator || (operator === 'BETWEEN' && !Array.isArray(value)) || value === undefined) {
+                        throw new Error('Invalid condition format');
+                    }
 
-                // Add logic operator (AND/OR) before each condition except the first one
-                return index > 0 ? `${logic} ${clause}` : clause;
-            }).join(' ');
+                    let clause;
+                    if (operator === 'BETWEEN') {
+                        clause = `${field} ${operator} ? AND ?`;
+                    } else {
+                        clause = `${field} ${operator} ?`;
+                    }
+
+                    // Add logic operator (AND/OR) before each condition except the first one
+                    return index > 0 ? `${logic} ${clause}` : clause;
+                }).join(' ');
+            };
+
+            // Build the WHERE clause
+            const whereClauses = buildWhereClause(conditions);
 
             // Flatten the values for the prepared statement
-            const values = conditions.flatMap(condition => {
-                if (condition.operator === 'BETWEEN') {
-                    return condition.value; // Return both lower and upper bound for BETWEEN
-                }
-                return condition.value;
-            });
+            const flattenValues = (conds) => {
+                return conds.flatMap(({ value, operator, conditions }) => {
+                    if (conditions) {
+                        return flattenValues(conditions);
+                    }
+                    if (operator === 'BETWEEN') {
+                        return value; // Return both lower and upper bound for BETWEEN
+                    }
+                    return value;
+                });
+            };
+            const values = flattenValues(conditions);
 
             // Construct the complete query
             const query = `SELECT * FROM \`${tableName}\` WHERE ${whereClauses}`;
+
+            // Log the final query for debugging
+            console.log('Executing Query:', query, 'with Values:', values);
 
             // Execute the query
             const [rows] = await connection.execute(query, values);
@@ -50,8 +70,11 @@ const whereClause = async (req, res) => {
             connection.release();
         }
     } catch (error) {
-        console.error('Error executing query:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        // Log the error for debugging
+        console.error('Error executing query:', error.message);
+
+        // Send the error message as the response
+        res.status(500).json({ error: 'Internal Server Error', message: error.message });
     }
 };
 
