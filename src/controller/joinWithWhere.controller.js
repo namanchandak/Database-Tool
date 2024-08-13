@@ -1,4 +1,4 @@
-const connection = require('../config/config');
+const pool = require('../config/config');
 const fs = require('fs');
 const path = require('path');
 
@@ -13,25 +13,23 @@ try {
 }
 
 const joinWithWhere = async (req, res) => {
-
     const { selectColumns, whereCondition } = req.body;
 
     if (!selectColumns || !Array.isArray(selectColumns)) {
-        return res.status(400).send('Missing or invalid required field: selectColumns');
+        return res.status(400).json({ error: 'Missing or invalid required field: selectColumns' });
     }
 
     if (!config) {
-        return res.status(500).send('Configuration not loaded correctly');
+        return res.status(500).json({ error: 'Configuration not loaded correctly' });
     }
 
     // Extract table names from selectColumns
     const tableNames = Array.from(new Set(selectColumns.map(col => col.split('.')[0])));
 
     if (!tableNames.length) {
-        return res.status(400).send('No valid table names found in selectColumns');
+        return res.status(400).json({ error: 'No valid table names found in selectColumns' });
     }
 
-    // Start building the query
     let baseTable = tableNames[0];
     let query = `SELECT ${selectColumns.map(col => {
         const [tableAlias, column] = col.split('.');
@@ -61,64 +59,96 @@ const joinWithWhere = async (req, res) => {
 
     // Apply WHERE condition if provided
     if (whereCondition && Array.isArray(whereCondition)) {
+        // Function to recursively build the WHERE clause
+        const buildWhereClause = (conds) => {
+            return conds.map(({ logic = 'AND', field, operator, value, tableValue, conditions }, index) => {
+                if (conditions) {
+                    // Recursively handle nested conditions with parentheses
+                    const nestedClause = buildWhereClause(conditions);
+                    return index > 0 ? `${logic.toUpperCase()} (${nestedClause})` : `(${nestedClause})`;
+                }
 
-        const whereClauses = whereCondition.map(({ logic, field, operator, value, tableValue }, index) => {
-            if (!field || !operator || (!tableValue && value === undefined && (operator !== 'IS NULL' && operator !== 'IS NOT NULL'))) {
-                throw new Error('Invalid condition format');
-            }
+                if (!field || !operator || (!tableValue && value === undefined && (operator !== 'IS NULL' && operator !== 'IS NOT NULL'))) {
+                    throw new Error('Invalid condition format');
+                }
 
-            let clause;
-            if (tableValue) {
-                // Use tableValue directly for column-to-column comparison
-                clause = `${field} ${operator} ${tableValue}`;
-            } else if (operator.toUpperCase() === 'BETWEEN' && Array.isArray(value)) {
-                clause = `${field} ${operator.toUpperCase()} ? AND ?`;
-            } else if (operator.toUpperCase() === 'IS NULL' || operator.toUpperCase() === 'IS NOT NULL') {
-                // Handle IS NULL and IS NOT NULL operators without placeholders
-                clause = `${field} ${operator.toUpperCase()}`;
-            } else {
-                clause = `${field} ${operator.toUpperCase()} ?`;
-            }
+                let clause;
+                if (tableValue) {
+                    // Use tableValue directly for column-to-column comparison
+                    clause = `${field} ${operator} ${tableValue}`;
+                } else if (operator.toUpperCase() === 'BETWEEN' && Array.isArray(value)) {
+                    clause = `${field} ${operator.toUpperCase()} ? AND ?`;
+                } else if (operator.toUpperCase() === 'IS NULL' || operator.toUpperCase() === 'IS NOT NULL') {
+                    // Handle IS NULL and IS NOT NULL operators without placeholders
+                    clause = `${field} ${operator.toUpperCase()}`;
+                } else {
+                    clause = `${field} ${operator.toUpperCase()} ?`;
+                }
 
-            // Add logic operator (AND/OR) before each condition except the first one
-            return index > 0 ? `${logic.toUpperCase()} ${clause}` : clause;
-        }).join(' ');
+                // Add logic operator (AND/OR) before each condition except the first one
+                return index > 0 ? `${logic.toUpperCase()} ${clause}` : clause;
+            }).join(' ');
+        };
 
-        // Flatten the values for the prepared statement (only for non-tableValue references)
-        const whereValues = whereCondition.flatMap(({ value, tableValue, operator }) => {
-            if (tableValue || operator.toUpperCase() === 'IS NULL' || operator.toUpperCase() === 'IS NOT NULL') {
-                return []; // Skip tableValue and NULL checks as they don't require placeholders
-            }
-            if (operator.toUpperCase() === 'BETWEEN') {
-                return value; // Handle BETWEEN with two values
-            }
-            return value;
-        });
+        const whereClauses = buildWhereClause(whereCondition);
+
+        // Flatten the values for the prepared statement
+        const flattenValues = (conds) => {
+            return conds.flatMap(({ value, tableValue, operator, conditions }) => {
+                if (conditions) {
+                    return flattenValues(conditions);
+                }
+                if (tableValue || operator.toUpperCase() === 'IS NULL' || operator.toUpperCase() === 'IS NOT NULL') {
+                    return []; // Skip tableValue and NULL checks as they don't require placeholders
+                }
+                if (operator.toUpperCase() === 'BETWEEN') {
+                    return value; // Handle BETWEEN with two values
+                }
+                return value;
+            });
+        };
+        const values = flattenValues(whereCondition);
 
         query += ` WHERE ${whereClauses}`;
 
         // Log the final query for debugging
-        console.log('Executing Query:', query, whereValues);
+        console.log('Executing Query:', query, 'With Values:', values);
 
-        // Execute the query with WHERE condition
+        // Get a connection from the pool
         try {
-            const [results] = await connection.execute(query, whereValues);
-            res.json(results);
+            const connection = await pool.getConnection();
+
+            try {
+                // Execute the query with WHERE condition
+                const [results] = await connection.execute(query, values);
+                res.json(results);
+            } finally {
+                // Release the connection back to the pool
+                connection.release();
+            }
         } catch (error) {
-            console.error('Error executing query with WHERE condition:', error.stack);
-            res.status(500).send('An error occurred while fetching data');
+            console.error('Error executing query with WHERE condition:', error.message);
+            res.status(500).json({ error: 'Internal Server Error', message: error.message });
         }
     } else {
         // Log the final query for debugging
         console.log('Executing Query:', query);
 
-        // Execute the query without WHERE condition
+        // Get a connection from the pool
         try {
-            const [results] = await connection.query(query);
-            res.json(results);
+            const connection = await pool.getConnection();
+
+            try {
+                // Execute the query without WHERE condition
+                const [results] = await connection.query(query);
+                res.json(results);
+            } finally {
+                // Release the connection back to the pool
+                connection.release();
+            }
         } catch (error) {
-            console.error('Error executing query:', error.stack);
-            res.status(500).send('An error occurred while fetching data');
+            console.error('Error executing query:', error.message);
+            res.status(500).json({ error: 'Internal Server Error', message: error.message });
         }
     }
 };
