@@ -1,15 +1,28 @@
+const pool = require('../config/config');
+const fs = require('fs');
+const path = require('path');
 
-const buildJoin =  (conds) => {
-    
-    return conds.map(({  joinType, table1, table2, conditions }, index) => {
+const configPath = path.join(__dirname, '../config/dbconfig.json');
+let config;
+try {
+    config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+} catch (err) {
+    console.error('Error reading config file:', err);
+}
+
+
+
+const buildJoin = (conds) => {
+
+    return conds.map(({ joinType, table1, table2, conditions }, index) => {
         let clause = "";
 
         if (conditions) {
             const nestedClause = buildJoin(conditions);
             // console.log(table1)
-            clause =   `${nestedClause}`;
+            clause = `${nestedClause}`;
         }
-        else{
+        else {
             const [tableName, attributeName] = table2.split('.');
 
             clause += `${tableName}`
@@ -18,10 +31,10 @@ const buildJoin =  (conds) => {
             const [tableName, attributeName] = table1.split('.');
 
             clause += ` ${joinType} ${tableName} ON ${table1} =  ${table2}`;
-        } 
+        }
         // console.log(clause)
 
-        return  clause;
+        return clause;
 
 
     }).join(' ');
@@ -29,25 +42,41 @@ const buildJoin =  (conds) => {
 
 const join = async (req, res) => {
 
-    const {joinsHere}  = req.body;
-    
-    const joinQuery =  buildJoin(joinsHere);
+    try {
 
-    const selectColumns = joinsHere.map(join => join.selectColumns).flat();
+        const { joinsHere } = req.body;
 
-    // Join the array elements into a single string
-    const selectColumnsString = selectColumns.join(', ');
+        const joinQuery = buildJoin(joinsHere);
 
-    // Now you can log or use the string
-    console.log(selectColumnsString); // Outputs: rcost.rId
+        const selectColumns = joinsHere.map(join => join.selectColumns).flat();
 
+        // Join the array elements into a single string
+        const selectColumnsString = selectColumns.join(', ');
 
-    
-    const query = `select ${selectColumnsString} from  ${joinQuery}`
+        // Now you can log or use the string
+        // console.log(selectColumnsString); // Outputs: rcost.rId
 
-    console.log(query)
+        const connection = await pool.getConnection();
 
-    res.status(200).send('Req send successfully ' + query);
+        const query = `select ${selectColumnsString} from  ${joinQuery}`
+
+        // console.log(query)
+
+        try {
+            // Log the final query for debugging
+            console.log('Executing Query:', query);
+
+            const [results] = await connection.execute(query);
+            res.json(results);
+        } finally {
+            connection.release();
+        }
+    }
+    catch (error) {
+        console.error('Error in join:', error.message);
+        res.status(500).json({ error: 'Internal Server Error', message: error.message });
+    }
+
 
 }
 
