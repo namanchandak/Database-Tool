@@ -1,5 +1,4 @@
-// const { joinTables } = require('./join.controller');
-// const { whereClause } = require('./whereClause.controller');
+
 const pool = require('../config/config');
 const fs = require('fs');
 const path = require('path');
@@ -14,24 +13,17 @@ try {
 
 const joinWithWhere = async (req, res) => {
     try {
-        // First, build the JOIN part of the query
-        let query = joinTables(req);
-
-        // If there's a WHERE condition, use the whereClause function to append the WHERE clause
+        let query = await joinTables(req);
         let values = [];
         if (req.body.whereCondition && Array.isArray(req.body.whereCondition)) {
             const whereResult = whereClause(req);
             query += whereResult.query;
             values = whereResult.values;
         }
-
-        // Execute the query
         const connection = await pool.getConnection();
 
         try {
-            // Log the final query for debugging
             console.log('Executing Query:', query, 'With Values:', values);
-
             const [results] = await connection.execute(query, values);
             res.json(results);
         } finally {
@@ -39,62 +31,70 @@ const joinWithWhere = async (req, res) => {
         }
     } catch (error) {
         console.error('Error in joinWithWhere:', error.message);
-        res.status(500).json({ error: 'Internal Server Error', message: error.message });
+        res.status(500).json({ error: 'Internal Server Error 2', message: error.message });
     }
 };
 
-module.exports = { joinWithWhere };
 
 
 
-const joinTables = (req) => {
-    const { selectColumns } = req.body;
+const joinTables = async (req, res) => {
 
-    if (!selectColumns || !Array.isArray(selectColumns)) {
-        throw new Error('Missing or invalid required field: selectColumns');
+    try {
+        const { joinsHere } = req.body;
+        const selectColumns = joinsHere.map(join => join.selectColumns).flat();
+        console.log("req" + joinsHere)
+
+
+        if (!selectColumns || !Array.isArray(selectColumns)) {
+            throw new Error('Missing or invalid required field: selectColumns');
+        }
+        if (!config) {
+            throw new Error('Configuration not loaded correctly');
+        }
+        const tableNames = Array.from(new Set(selectColumns.map(col => col.split('.')[0])));
+
+        if (!tableNames.length) {
+            throw new Error('No valid table names found in selectColumns');
+        }
+
+
+        const joinQuery = buildJoin(joinsHere);
+        const selectColumnsString = selectColumns.join(', ');
+        // const connection = await pool.getConnection();
+        const query = `select ${selectColumnsString} from  ${joinQuery}`
+
+        return query
+
+        
     }
-
-    if (!config) {
-        throw new Error('Configuration not loaded correctly');
+    catch (error) {
+        console.error('Error in join:', error.message);
+        res.status(500).json({ error: 'Internal Server Error 1', message: error.message });
     }
-
-    // Extract table names from selectColumns
-    const tableNames = Array.from(new Set(selectColumns.map(col => col.split('.')[0])));
-
-    if (!tableNames.length) {
-        throw new Error('No valid table names found in selectColumns');
-    }
-
-    // Start building the query
-    let baseTable = tableNames[0];
-    let query = `SELECT ${selectColumns.map(col => {
-        const [tableAlias, column] = col.split('.');
-        return `${tableAlias}.${column}`;
-    }).join(', ')} FROM ${baseTable} AS ${baseTable}`;
-    let usedTables = new Set([baseTable]);
-
-    // Function to find and add join conditions recursively
-    const addJoins = (currentTable) => {
-        config.tables[currentTable]?.forEach(relationship => {
-            if (!usedTables.has(relationship.table) && tableNames.includes(relationship.table)) {
-                usedTables.add(relationship.table);
-
-                const onClause = relationship.commonAttributes.map(attr => {
-                    const currentTableAttr = `${currentTable}.${attr}`;
-                    const joinTableAttr = `${relationship.table}.${attr}`;
-                    return `${currentTableAttr} = ${joinTableAttr}`;
-                }).join(' AND ');
-
-                query += ` LEFT JOIN ${relationship.table} AS ${relationship.table} ON ${onClause}`;
-                addJoins(relationship.table);
-            }
-        });
-    };
-
-    addJoins(baseTable);
-
-    return query;
 };
+
+const buildJoin = (conds) => {
+    return conds.map(({ joinType, table1, table2, conditions }, index) => {
+        let clause = "";
+
+        if (conditions) {
+            const nestedClause = buildJoin(conditions);
+            clause = `${nestedClause}`;
+        }
+        else {
+            const [tableName, attributeName] = table2.split('.');
+
+            clause += `${tableName}`
+        }
+        if (joinType) {
+            const [tableName, attributeName] = table1.split('.');
+
+            clause += ` ${joinType} ${tableName} ON ${table1} =  ${table2}`;
+        }
+        return clause;
+    }).join(' ');
+}
 
 
 
@@ -105,11 +105,11 @@ const buildWhereClause = (conds) => {
             const nestedClause = buildWhereClause(conditions);
             return index > 0 ? `${logic.toUpperCase()} (${nestedClause})` : `(${nestedClause})`;
         }
-
+        
         if (!field || !operator || (!tableValue && value === undefined && (operator !== 'IS NULL' && operator !== 'IS NOT NULL'))) {
             throw new Error('Invalid condition format');
         }
-
+        
         let clause;
         if (tableValue) {
             clause = `${field} ${operator} ${tableValue}`;
@@ -120,7 +120,7 @@ const buildWhereClause = (conds) => {
         } else {
             clause = `${field} ${operator.toUpperCase()} ?`;
         }
-
+        
         return index > 0 ? `${logic.toUpperCase()} ${clause}` : clause;
     }).join(' ');
 };
@@ -130,7 +130,7 @@ const whereClause = (req) => {
     if (!whereCondition || !Array.isArray(whereCondition)) {
         return { query: '', values: [] };
     }
-
+    
     const whereClauses = buildWhereClause(whereCondition);
     const flattenValues = (conds) => {
         return conds.flatMap(({ value, tableValue, operator, conditions }) => {
@@ -147,6 +147,8 @@ const whereClause = (req) => {
         });
     };
     const values = flattenValues(whereCondition);
-
+    
     return { query: ` WHERE ${whereClauses}`, values };
 };
+
+module.exports = { joinWithWhere };
