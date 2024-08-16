@@ -33,7 +33,17 @@ const join = async (req, res) => {
     
     const joinQuery =  buildJoin(joinsHere);
 
-    const query = `select * from  ${joinQuery}`
+    const selectColumns = joinsHere.map(join => join.selectColumns).flat();
+
+    // Join the array elements into a single string
+    const selectColumnsString = selectColumns.join(', ');
+
+    // Now you can log or use the string
+    console.log(selectColumnsString); // Outputs: rcost.rId
+
+
+    
+    const query = `select ${selectColumnsString} from  ${joinQuery}`
 
     console.log(query)
 
