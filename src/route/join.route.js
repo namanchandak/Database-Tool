@@ -1,8 +1,8 @@
 const express = require("express");
 const router = express.Router()
-const {leftjoin, rightjoin} = require('../controller/join.controller')
+const {join} = require('../controller/join.controller')
 
-router.post('/left', leftjoin)
-router.post('/right', rightjoin)
+router.post('/', join)
+// router.post('/', rightjoin)
 
 module.exports = router;
