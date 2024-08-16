@@ -10,16 +10,12 @@ try {
     console.error('Error reading config file:', err);
 }
 
-
-
 const buildJoin = (conds) => {
-
     return conds.map(({ joinType, table1, table2, conditions }, index) => {
         let clause = "";
 
         if (conditions) {
             const nestedClause = buildJoin(conditions);
-            // console.log(table1)
             clause = `${nestedClause}`;
         }
         else {
@@ -32,40 +28,39 @@ const buildJoin = (conds) => {
 
             clause += ` ${joinType} ${tableName} ON ${table1} =  ${table2}`;
         }
-        // console.log(clause)
-
         return clause;
-
-
     }).join(' ');
 }
 
 const join = async (req, res) => {
 
+
     try {
-
+        
         const { joinsHere } = req.body;
-
-        const joinQuery = buildJoin(joinsHere);
-
         const selectColumns = joinsHere.map(join => join.selectColumns).flat();
 
-        // Join the array elements into a single string
+
+        if (!selectColumns || !Array.isArray(selectColumns)) {
+            throw new Error('Missing or invalid required field: selectColumns');
+        }
+        if (!config) {
+            throw new Error('Configuration not loaded correctly');
+        }
+        const tableNames = Array.from(new Set(selectColumns.map(col => col.split('.')[0])));
+
+        if (!tableNames.length) {
+            throw new Error('No valid table names found in selectColumns');
+        }
+
+
+        const joinQuery = buildJoin(joinsHere);
         const selectColumnsString = selectColumns.join(', ');
-
-        // Now you can log or use the string
-        // console.log(selectColumnsString); // Outputs: rcost.rId
-
         const connection = await pool.getConnection();
-
         const query = `select ${selectColumnsString} from  ${joinQuery}`
 
-        // console.log(query)
-
         try {
-            // Log the final query for debugging
             console.log('Executing Query:', query);
-
             const [results] = await connection.execute(query);
             res.json(results);
         } finally {
@@ -76,8 +71,6 @@ const join = async (req, res) => {
         console.error('Error in join:', error.message);
         res.status(500).json({ error: 'Internal Server Error', message: error.message });
     }
-
-
 }
 
 module.exports = { join }
