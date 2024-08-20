@@ -13,7 +13,21 @@ try {
 
 const joinWithWhere = async (req, res) => {
     try {
-        let query = await joinTables(req);
+
+        const {selectColumns } = req.body;
+        if (!selectColumns || !Array.isArray(selectColumns)) {
+            throw new Error('Missing or invalid required field: selectColumns');
+        }
+        if (!config) {
+            throw new Error('Configuration not loaded correctly');
+        }
+        const tableNames = Array.from(new Set(selectColumns.map(col => col.split('.')[0])));
+        if (!tableNames.length) {
+            throw new Error('No valid table names found in selectColumns');
+        }
+
+        let query = `select ${selectColumns} from `
+        query += await joinTables(req);
         let values = [];
         if (req.body.whereCondition && Array.isArray(req.body.whereCondition)) {
             const whereResult = whereClause(req);
@@ -36,16 +50,9 @@ const joinWithWhere = async (req, res) => {
 };
 
 
-
-
 const joinTables = async (req, res) => {
-
-    try {
-        const { joinsHere } = req.body;
-        const selectColumns = joinsHere.map(join => join.selectColumns).flat();
-        console.log("req" + joinsHere)
-
-
+    try {   
+        const { joinsHere,selectColumns } = req.body;
         if (!selectColumns || !Array.isArray(selectColumns)) {
             throw new Error('Missing or invalid required field: selectColumns');
         }
@@ -53,51 +60,30 @@ const joinTables = async (req, res) => {
             throw new Error('Configuration not loaded correctly');
         }
         const tableNames = Array.from(new Set(selectColumns.map(col => col.split('.')[0])));
-
         if (!tableNames.length) {
             throw new Error('No valid table names found in selectColumns');
         }
-
-
-        const joinQuery = buildJoin(joinsHere);
-        const selectColumnsString = selectColumns.join(', ');
-        // const connection = await pool.getConnection();
-        const query = `select ${selectColumnsString} from  ${joinQuery}`
-
-        return query
-
-        
+        let joinClause = '';
+        for (let i = 0; i < joinsHere.length; i++) {
+            const { baseTable, table2, joinType } = joinsHere[i];
+            if (!baseTable || !table2 || !joinType) {
+                throw new Error('Missing required field(s) in join configuration');
+            }
+            const [baseTableName, attribute1Name] = baseTable.split('.');
+            const [table2Name, attribute2Name] = table2.split('.');
+            if (i === 0) {
+                joinClause += ` ${baseTableName} ${joinType} ${table2Name} ON ${baseTable} = ${table2} `;
+            } else {
+                joinClause += ` ${joinType} ${table2Name} ON ${baseTable} = ${table2} `;
+            }
+        }
+        return joinClause
     }
     catch (error) {
         console.error('Error in join:', error.message);
-        res.status(500).json({ error: 'Internal Server Error 1', message: error.message });
+        res.status(500).json({ error: 'Internal Server Error', message: error.message });
     }
 };
-
-const buildJoin = (conds) => {
-    return conds.map(({ joinType, table1, table2, conditions }, index) => {
-        let clause = "";
-
-        if (conditions) {
-            const nestedClause = buildJoin(conditions);
-            clause = `${nestedClause}`;
-        }
-        else {
-            const [tableName, attributeName] = table2.split('.');
-
-            clause += `${tableName}`
-        }
-        if (joinType) {
-            const [tableName, attributeName] = table1.split('.');
-
-            clause += ` ${joinType} ${tableName} ON ${table1} =  ${table2}`;
-        }
-        return clause;
-    }).join(' ');
-}
-
-
-
 
 const buildWhereClause = (conds) => {
     return conds.map(({ logic = 'AND', field, operator, value, tableValue, conditions }, index) => {
