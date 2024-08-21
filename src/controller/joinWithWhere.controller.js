@@ -36,12 +36,8 @@ const joinWithWhere = async (req, res) => {
             values = whereResult.values;
         }
         const connection = await pool.getConnection();
-
         const orderByQuery = await orderBy(req)
-
         query += orderByQuery
-
-        // console.log("this is orderby \n\n\n\n\n\n",orrder)
 
         try {
             console.log('Executing Query:', query, 'With Values:', values);

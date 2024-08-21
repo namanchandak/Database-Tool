@@ -1,7 +1,6 @@
 
 
 const orderBy = async (req, res) => {
-
     try {
         let query = `order by`
         let { orderBy } = req.body;
@@ -23,11 +22,7 @@ const orderBy = async (req, res) => {
 
 
         }
-
-        console.log("\n\n\n\n", query, "\n\n\n\n")
-
         return query
-
     } catch (error) {
         console.error('Error in join:', error.message);
         res.status(500).json({ error: 'Internal Server Error', message: error.message });
