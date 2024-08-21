@@ -2,6 +2,7 @@
 const pool = require('../config/config');
 const fs = require('fs');
 const path = require('path');
+const {orderBy} = require('../controller/orderBy.controller');
 
 const configPath = path.join(__dirname, '../config/dbconfig.json');
 let config;
@@ -35,6 +36,8 @@ const joinWithWhere = async (req, res) => {
             values = whereResult.values;
         }
         const connection = await pool.getConnection();
+        const orderByQuery = await orderBy(req)
+        query += orderByQuery
 
         try {
             console.log('Executing Query:', query, 'With Values:', values);
@@ -100,11 +103,11 @@ const buildWhereClause = (conds) => {
         if (tableValue) {
             clause = `${field} ${operator} ${tableValue}`;
         } else if (operator.toUpperCase() === 'BETWEEN' && Array.isArray(value)) {
-            clause = `${field} ${operator.toUpperCase()} ? AND ?`;
+            clause = `${field} ${operator.toUpperCase()} ? AND ? `;
         } else if (operator.toUpperCase() === 'IS NULL' || operator.toUpperCase() === 'IS NOT NULL') {
             clause = `${field} ${operator.toUpperCase()}`;
         } else {
-            clause = `${field} ${operator.toUpperCase()} ?`;
+            clause = `${field} ${operator.toUpperCase()} ? `;
         }
         
         return index > 0 ? `${logic.toUpperCase()} ${clause}` : clause;
