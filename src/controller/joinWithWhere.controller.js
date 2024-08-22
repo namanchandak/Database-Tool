@@ -3,6 +3,7 @@ const pool = require('../config/config');
 const fs = require('fs');
 const path = require('path');
 const {orderBy} = require('../controller/orderBy.controller');
+const {groupBy} = require('../controller/groupBy.controller');
 
 const configPath = path.join(__dirname, '../config/dbconfig.json');
 let config;
@@ -36,8 +37,11 @@ const joinWithWhere = async (req, res) => {
             values = whereResult.values;
         }
         const connection = await pool.getConnection();
+        const groupByQuery = await groupBy(req)
         const orderByQuery = await orderBy(req)
+        query += groupByQuery
         query += orderByQuery
+
 
         try {
             console.log('Executing Query:', query, 'With Values:', values);
