@@ -5,11 +5,10 @@ import pymysql
 import io
 import os
 from google.oauth2 import service_account
-from dotenv import load_dotenv
+from dotenv import load_dotenv # type: ignore
 
 load_dotenv()
 
-# Configuration for MySQL and BigQuery
 mysql_config = {
     'host': 'localhost',
     'user': 'root',
@@ -38,10 +37,8 @@ def create_view():
     """
     Create a view in BigQuery.
     """
-    # Create a BigQuery client with the service account key
     client = bigquery.Client.from_service_account_json(key_path)
 
-    # Adjust SQL to match actual table schema
     create_view_sql = f"""
     CREATE OR REPLACE VIEW `{bigquery_config['project_id']}.{bigquery_config['dataset_id']}.my_view` AS
     SELECT actor.actor_id, actor.first_name, actor.last_name, actor_info.film_info
@@ -50,7 +47,6 @@ def create_view():
     ON actor.actor_id = actor_info.actor_id
     """
 
-    # Run the SQL statement to create the view
     query_job = client.query(create_view_sql)
     
     # Wait for the query to finish
