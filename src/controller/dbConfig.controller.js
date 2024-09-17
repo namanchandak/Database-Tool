@@ -33,29 +33,23 @@ const dbConfigPost = async (req, res) => {
       });
     }
 
+    
     let dbData = await getDbData();
-
+    
     if (!dbData.tables[req.body.table1]) {
-      dbData = await addTable(req.body.table1);
+        dbData = await addTable(req.body.table1);
     }
-
+    
     if (!dbData.tables[req.body.table2]) {
-      dbData = await addTable(req.body.table2);
+        dbData = await addTable(req.body.table2);
     }
-
-    // console.log(dbData.tables["empt"])
-    // [
-        //     { table: 'salaryt', commonAttributes: [ 'empId' ] },
-        //     { table: 'fund', commonAttributes: [ 'empId', 'name' ] },
-        //     { table: 'resource', commonAttributes: [ 'empId' ] },
-        //     { table: 'joint', commonAttributes: [ 'empId' ] }
-        //   ]
-
+    
     let mapFound = -1
     //insert in table 1
+    //common attribute check
     for (let index = 0; index < dbData.tables[req.body.table1].length; index++) {
         const element = dbData.tables[req.body.table1][index].table;
-        console.log(element, " hi i am namann\n")
+        // console.log(element, " hi i am namann\n")
 
         if(dbData.tables[req.body.table1][index].table == req.body.table2)
         {
@@ -63,19 +57,19 @@ const dbConfigPost = async (req, res) => {
             break;
         }
     }
-    console.log(mapFound, " hi i am inde\n")
+    // console.log(mapFound, " hi i am inde\n")
     if(mapFound !== -1)
     {
         //if already exist condition ignored
         for (let index = 0; index < req.body.commonAttributes.length; index++) {
             const element = req.body.commonAttributes[index];
-            dbData.tables[req.body.table1][mapFound].commonAttributes.push(req.body.commonAttributes[index])            
+            dbData.tables[req.body.table1][mapFound].commonAttributes[element] = ""           
         }
     }
     else
     {
         dbData.tables[req.body.table1].push({ "table": req.body.table2, "commonAttributes": req.body.commonAttributes })
-        // dbData.tables[req.body.table2].push({ "table": req.body.table1, "commonAttributes": req.body.commonAttributes })
+        dbData.tables[req.body.table2].push({ "table": req.body.table1, "commonAttributes": req.body.commonAttributes })
     }
 
     ///////insert in table2
@@ -97,12 +91,12 @@ const dbConfigPost = async (req, res) => {
         //if already exist condition ignored
         for (let index = 0; index < req.body.commonAttributes.length; index++) {
             const element = req.body.commonAttributes[index];
-            dbData.tables[req.body.table2][mapFound].commonAttributes.push(req.body.commonAttributes[index])            
+            dbData.tables[req.body.table2][mapFound].commonAttributes[element] = ""   
         }
     }
     else
     {
-        // dbData.tables[req.body.table1].push({ "table": req.body.table2, "commonAttributes": req.body.commonAttributes })
+        dbData.tables[req.body.table1].push({ "table": req.body.table2, "commonAttributes": req.body.commonAttributes })
         dbData.tables[req.body.table2].push({ "table": req.body.table1, "commonAttributes": req.body.commonAttributes })
     }
 
@@ -144,7 +138,7 @@ async function addTable(table) {
     const json = JSON.parse(data);
 
     if (typeof json.tables === 'object') {
-      json.tables[table] = [{}];
+      json.tables[table] = [];
       await fs.writeFile(filePath, JSON.stringify(json, null, 2));
       console.log('File updated successfully');
       return json;

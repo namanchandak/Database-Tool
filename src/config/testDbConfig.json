@@ -25,6 +25,13 @@
         "commonAttributes": [
           "empId"
         ]
+      },
+      {
+        "table": "bhaii",
+        "commonAttributes": {
+          "never end": "",
+          "mission imp": ""
+        }
       }
     ],
     "salaryt": [
@@ -116,36 +123,43 @@
       },
       {
         "table": "resource",
-        "commonAttributes": [
-          "rId",
-          "usedAt"
-        ]
+        "commonAttributes": {
+          "rId": "",
+          "usedAt": ""
+        }
       }
     ],
     "joint": [
       {
         "table": "empt",
-        "commonAttributes": [
-          "empId"
-        ]
+        "commonAttributes": {
+          "empId": ""
+        }
       }
     ],
     "bhaii": [
       {
         "table": "bro",
-        "commonAttributes": [
-          "deadpool",
-          "stranger"
-        ]
+        "commonAttributes": {
+          "never end": "",
+          "mission imp": ""
+        }
+      },
+      {
+        "table": "empt",
+        "commonAttributes": {
+          "never end": "",
+          "mission imp": ""
+        }
       }
     ],
     "bro": [
       {
         "table": "bhaii",
-        "commonAttributes": [
-          "deadpool",
-          "stranger"
-        ]
+        "commonAttributes": {
+          "never end": "",
+          "mission imp": ""
+        }
       }
     ]
   }
