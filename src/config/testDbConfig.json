@@ -25,13 +25,6 @@
         "commonAttributes": [
           "empId"
         ]
-      },
-      {
-        "table": "bhaii",
-        "commonAttributes": {
-          "never end": "",
-          "mission imp": ""
-        }
       }
     ],
     "salaryt": [
@@ -142,14 +135,20 @@
         "table": "bro",
         "commonAttributes": {
           "never end": "",
-          "mission imp": ""
+          "mission imp": "",
+          "kill bill": "",
+          "breaking bad": "",
+          "money hiest": "",
+          "lacasa de papel": ""
         }
       },
       {
-        "table": "empt",
+        "table": "test 2",
         "commonAttributes": {
-          "never end": "",
-          "mission imp": ""
+          "lacasa de papel": "",
+          "mission imp": "",
+          "breaking bad": "",
+          "money hiest": ""
         }
       }
     ],
@@ -158,7 +157,22 @@
         "table": "bhaii",
         "commonAttributes": {
           "never end": "",
-          "mission imp": ""
+          "mission imp": "",
+          "kill bill": "",
+          "breaking bad": "",
+          "money hiest": "",
+          "lacasa de papel": ""
+        }
+      }
+    ],
+    "test 2": [
+      {
+        "table": "bhaii",
+        "commonAttributes": {
+          "lacasa de papel": "",
+          "mission imp": "",
+          "breaking bad": "",
+          "money hiest": ""
         }
       }
     ]

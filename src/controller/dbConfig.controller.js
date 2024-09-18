@@ -58,12 +58,16 @@ const dbConfigPost = async (req, res) => {
         }
     }
     // console.log(mapFound, " hi i am inde\n")
+    const jsonKeys = Object.keys(req.body.commonAttributes);
     if(mapFound !== -1)
     {
         //if already exist condition ignored
-        for (let index = 0; index < req.body.commonAttributes.length; index++) {
-            const element = req.body.commonAttributes[index];
-            dbData.tables[req.body.table1][mapFound].commonAttributes[element] = ""           
+        for (let index = 0; index < jsonKeys.length ; index++) {
+            // const element = req.body.commonAttributes[index];
+            console.log(jsonKeys[index] , "I am here\n")
+            if( !jsonKeys[index]  || jsonKeys[index] == undefined)
+                continue
+            dbData.tables[req.body.table1][mapFound].commonAttributes[jsonKeys[index]] = ""           
         }
     }
     else
@@ -75,9 +79,10 @@ const dbConfigPost = async (req, res) => {
     ///////insert in table2
 
     mapFound = -1
-    for (let index = 0; index < dbData.tables[req.body.table2].length; index++) {
-        const element = dbData.tables[req.body.table2][index].table;
-        console.log(element)
+    
+    for (let index = 0; index < Object.keys(req.body.commonAttributes).length; index++) {
+        // const element = dbData.tables[req.body.table2][index].table;
+        // console.log(element)
 
         if(dbData.tables[req.body.table2][index].table == req.body.table1)
         {
@@ -85,13 +90,15 @@ const dbConfigPost = async (req, res) => {
             break;
         }
     }
-    //found
+    // found
     if(mapFound !== -1)
     {
         //if already exist condition ignored
-        for (let index = 0; index < req.body.commonAttributes.length; index++) {
+        for (let index = 0; index < jsonKeys.length; index++) {
             const element = req.body.commonAttributes[index];
-            dbData.tables[req.body.table2][mapFound].commonAttributes[element] = ""   
+            if( !jsonKeys[index]  || jsonKeys[index] == undefined)
+                continue
+            dbData.tables[req.body.table2][mapFound].commonAttributes[jsonKeys[index]] = ""   
         }
     }
     else
@@ -101,7 +108,7 @@ const dbConfigPost = async (req, res) => {
     }
 
 
-    console.log(dbData.tables[req.body.table2])
+    // console.log(dbData.tables[req.body.table2])
     updateTable(dbData)
 
     return res.status(200).json({message :"Data added in table 1 and 2 Successfully"});
