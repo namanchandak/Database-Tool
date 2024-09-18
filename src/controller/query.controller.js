@@ -2,8 +2,8 @@
 const pool = require('../config/config');
 const fs = require('fs');
 const path = require('path');
-const {orderBy} = require('../controller/orderBy.controller');
-const {groupBy} = require('../controller/groupBy.controller');
+const {orderBy} = require('./orderBy.controller');
+const {groupBy} = require('./groupBy.controller');
 
 const configPath = path.join(__dirname, '../config/dbconfig.json');
 let config;
@@ -13,7 +13,7 @@ try {
     console.error('Error reading config file:', err);
 }
 
-const joinWithWhere = async (req, res) => {
+const queryFire = async (req, res) => {
     try {
 
         const {selectColumns } = req.body;
@@ -36,7 +36,7 @@ const joinWithWhere = async (req, res) => {
             query += whereResult.query;
             values = whereResult.values;
         }
-        console.log(query)
+        // console.log(query)
         const connection = await pool.getConnection();
 
         if( req.body.groupBy != undefined && req.body.groupBy != '')
@@ -152,4 +152,4 @@ const whereClause = (req) => {
     return { query: ` WHERE ${whereClauses}`, values };
 };
 
-module.exports = { joinWithWhere };
+module.exports = { queryFire };
