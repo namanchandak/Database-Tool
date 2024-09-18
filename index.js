@@ -13,6 +13,8 @@ const jsonData = require('./src/route/jsonData.route')
 const whereClause = require('./src/route/whereClause.router')
 const joinWithWhere = require('./src/route/joinWithWhere.route')
 const dbConfig = require('./src/route/dbConfig.route')
+const tableAttribute = require('./src/route/tableAttribute.route')
+
 
 app.use("/", serverRoute)
 app.use("/join", join)
@@ -20,4 +22,5 @@ app.use("/where", whereClause)
 app.use("/jsonData", jsonData)
 app.use("/joinWithWhere", joinWithWhere)
 app.use("/dbConfig", dbConfig)
+app.use("/dbData", tableAttribute)
 
