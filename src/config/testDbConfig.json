@@ -175,6 +175,72 @@
           "money hiest": ""
         }
       }
+    ],
+    "i am": [
+      {
+        "table": "mongo test",
+        "commonAttributes": {
+          "hi": "",
+          "mary on": "",
+          "cross it": "",
+          "joker": "",
+          "expresso": ""
+        }
+      },
+      {
+        "table": "mongo test2",
+        "commonAttributes": {
+          "hi": "",
+          "mary on": "",
+          "cross it": "",
+          "joker": "",
+          "expresso": ""
+        }
+      }
+    ],
+    "mongo test": [
+      {
+        "table": "i am",
+        "commonAttributes": {
+          "hi": "",
+          "mary on": "",
+          "cross it": "",
+          "joker": "",
+          "expresso": ""
+        }
+      },
+      {
+        "table": "mongo test2",
+        "commonAttributes": {
+          "expresso": "",
+          "mary on": "",
+          "cross it": "",
+          "joker": "",
+          "save tears": ""
+        }
+      }
+    ],
+    "mongo test2": [
+      {
+        "table": "i am",
+        "commonAttributes": {
+          "hi": "",
+          "mary on": "",
+          "cross it": "",
+          "joker": "",
+          "expresso": ""
+        }
+      },
+      {
+        "table": "mongo test",
+        "commonAttributes": {
+          "expresso": "",
+          "mary on": "",
+          "cross it": "",
+          "joker": "",
+          "save tears": ""
+        }
+      }
     ]
   }
 }
