@@ -36,11 +36,19 @@ const joinWithWhere = async (req, res) => {
             query += whereResult.query;
             values = whereResult.values;
         }
+        console.log(query)
         const connection = await pool.getConnection();
-        const groupByQuery = await groupBy(req)
-        const orderByQuery = await orderBy(req)
-        query += groupByQuery
-        query += orderByQuery
+
+        if( req.body.groupBy != undefined && req.body.groupBy != '')
+        {
+            const groupByQuery = await groupBy(req)
+            query += groupByQuery
+        }
+        if( req.body.orderBy != undefined && req.body.orderBy != '')
+        {
+            const orderByQuery = await orderBy(req)
+            query += orderByQuery
+        }
 
 
         try {
