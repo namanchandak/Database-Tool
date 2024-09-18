@@ -101,7 +101,7 @@ const joinTables = async (req, res) => {
 };
 
 const buildWhereClause = (conds) => {
-    return conds.map(({ logic = 'AND', field, operator, value, tableValue, conditions }, index) => {
+    return conds.map(({ logic , field, operator, value, tableValue, conditions }, index) => {
         if (conditions) {
             const nestedClause = buildWhereClause(conditions);
             return index > 0 ? `${logic.toUpperCase()} (${nestedClause})` : `(${nestedClause})`;
