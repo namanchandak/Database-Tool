@@ -17,5 +17,22 @@ const getTable = async (req, res) => {
     connection.release();
   }
 };
-const getColumn = async (req, res) => {};
+const getColumn = async (req, res) => {
+    const table = req.body.table
+    const connection = await pool.getConnection();
+
+  try {
+    // console.log('Executing Query:', query, 'With Values:', values);
+    const results = await connection.execute(`SHOW COLUMNS FROM ${table}`);
+
+    const columnName = results[0].map(row => row["Field"]) ;
+    res.status(200).json(columnName);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "Internal Server Error", message: error.message });
+  } finally {
+    connection.release();
+  }
+};
 module.exports = { getTable, getColumn };
