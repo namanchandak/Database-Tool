@@ -1,0 +1,180 @@
+{
+  "tables": {
+    "empt": [
+      {
+        "table": "salaryt",
+        "commonAttributes": [
+          "empId"
+        ]
+      },
+      {
+        "table": "fund",
+        "commonAttributes": [
+          "empId",
+          "name"
+        ]
+      },
+      {
+        "table": "resource",
+        "commonAttributes": [
+          "empId"
+        ]
+      },
+      {
+        "table": "joint",
+        "commonAttributes": [
+          "empId"
+        ]
+      }
+    ],
+    "salaryt": [
+      {
+        "table": "empt",
+        "commonAttributes": [
+          "empId"
+        ]
+      },
+      {
+        "table": "deptt",
+        "commonAttributes": [
+          "salId"
+        ]
+      },
+      {
+        "table": "amountt",
+        "commonAttributes": [
+          "salId"
+        ]
+      }
+    ],
+    "deptt": [
+      {
+        "table": "salaryt",
+        "commonAttributes": [
+          "salId"
+        ]
+      }
+    ],
+    "amountt": [
+      {
+        "table": "salaryt",
+        "commonAttributes": [
+          "salId"
+        ]
+      }
+    ],
+    "fund": [
+      {
+        "table": "empt",
+        "commonAttributes": [
+          "empId",
+          "name"
+        ]
+      },
+      {
+        "table": "manager",
+        "commonAttributes": [
+          "fundId"
+        ]
+      }
+    ],
+    "manager": [
+      {
+        "table": "deptt",
+        "commonAttributes": [
+          "dName"
+        ]
+      },
+      {
+        "table": "fund",
+        "commonAttributes": [
+          "fundId"
+        ]
+      }
+    ],
+    "resource": [
+      {
+        "table": "empt",
+        "commonAttributes": [
+          "empId"
+        ]
+      },
+      {
+        "table": "rcost",
+        "commonAttributes": [
+          "rId",
+          "usedAt"
+        ]
+      }
+    ],
+    "rcost": [
+      {
+        "table": "empt",
+        "commonAttributes": [
+          "empId"
+        ]
+      },
+      {
+        "table": "resource",
+        "commonAttributes": {
+          "rId": "",
+          "usedAt": ""
+        }
+      }
+    ],
+    "joint": [
+      {
+        "table": "empt",
+        "commonAttributes": {
+          "empId": ""
+        }
+      }
+    ],
+    "bhaii": [
+      {
+        "table": "bro",
+        "commonAttributes": {
+          "never end": "",
+          "mission imp": "",
+          "kill bill": "",
+          "breaking bad": "",
+          "money hiest": "",
+          "lacasa de papel": ""
+        }
+      },
+      {
+        "table": "test 2",
+        "commonAttributes": {
+          "lacasa de papel": "",
+          "mission imp": "",
+          "breaking bad": "",
+          "money hiest": ""
+        }
+      }
+    ],
+    "bro": [
+      {
+        "table": "bhaii",
+        "commonAttributes": {
+          "never end": "",
+          "mission imp": "",
+          "kill bill": "",
+          "breaking bad": "",
+          "money hiest": "",
+          "lacasa de papel": ""
+        }
+      }
+    ],
+    "test 2": [
+      {
+        "table": "bhaii",
+        "commonAttributes": {
+          "lacasa de papel": "",
+          "mission imp": "",
+          "breaking bad": "",
+          "money hiest": ""
+        }
+      }
+    ]
+  }
+}
