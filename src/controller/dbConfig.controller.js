@@ -43,10 +43,10 @@ const dbConfigPost = async (req, res) => {
     if (!dbData.tables[req.body.table2]) {
         dbData = await addTable(req.body.table2);
     }
+    //common attribute check
     
     let mapFound = -1
     //insert in table 1
-    //common attribute check
     for (let index = 0; index < dbData.tables[req.body.table1].length; index++) {
         const element = dbData.tables[req.body.table1][index].table;
         // console.log(element, " hi i am namann\n")
@@ -104,7 +104,7 @@ const dbConfigPost = async (req, res) => {
     console.log(dbData.tables[req.body.table2])
     updateTable(dbData)
 
-    return res.status(200).json(dbData.tables[req.body.table1]);
+    return res.status(200).json({message :"Data added in table 1 and 2 Successfully"});
   } catch (error) {
     return res.status(500).json({
       error: 'Internal Server Error',
