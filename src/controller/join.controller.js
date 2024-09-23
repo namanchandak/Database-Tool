@@ -64,9 +64,7 @@ const commonAttribute = async (req, res) => {
     table1 = req.body.table1;
     table2 = req.body.table2;
 
-    let commonAttribute = config.tables[table1][table2]
-
-    // console.log(, "\n", table1, "\n", table2);
+    let commonAttribute = config.tables[table1][table2];
     res.json(Object.keys(commonAttribute));
   } catch (error) {
     console.error("Error in join:", error.message);
