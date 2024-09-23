@@ -1,8 +1,9 @@
 const express = require("express");
 const router = express.Router()
-const {join} = require('../controller/join.controller')
+const {join, commonAttribute} = require('../controller/join.controller')
 
 router.post('/', join)
-// router.post('/', rightjoin)
+router.get('/commonAttribute', commonAttribute)
+
 
 module.exports = router;
