@@ -152,4 +152,24 @@ const whereClause = (req) => {
     return { query: ` WHERE ${whereClauses}`, values };
 };
 
-module.exports = { queryFire };
+
+
+const queryFireV2 = async(req, res) =>
+{
+    const query = req.body.query
+    const values = req.body.values
+    try
+    {
+        const connection = await pool.getConnection();
+        const [results] = await connection.execute(query, values);
+        res.json(results);
+    }
+    catch(error)
+    {
+        console.error('Error in join:', error.message);
+        res.status(500).json({ error: 'Internal Server Error', message: error.message });
+    }
+
+}
+
+module.exports = { queryFire, queryFireV2 };
