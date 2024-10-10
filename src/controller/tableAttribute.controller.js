@@ -25,8 +25,11 @@ const getColumn = async (req, res) => {
     // console.log('Executing Query:', query, 'With Values:', values);
     const results = await connection.execute(`SHOW COLUMNS FROM ${table}`);
 
-    const columnName = results[0].map(row => row["Field"]) ;
-    res.status(200).json(columnName);
+    const columnInfo = results[0].map(row => ({
+      Field: row["Field"],
+      Type: row["Type"]
+  }));
+    res.status(200).json(columnInfo);
   } catch (error) {
     res
       .status(500)
