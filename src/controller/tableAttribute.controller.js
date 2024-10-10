@@ -7,7 +7,7 @@ const getTable = async (req, res) => {
     // console.log('Executing Query:', query, 'With Values:', values);
     const results = await connection.execute("show tables");
 
-    const tableNames = results[0].map(row => row["Tables_in_test"]);
+    const tableNames = results[0].map((row) => row["Tables_in_test"]);
     res.status(200).json(tableNames);
   } catch (error) {
     res
@@ -18,17 +18,17 @@ const getTable = async (req, res) => {
   }
 };
 const getColumn = async (req, res) => {
-    const table = req.body.table
-    const connection = await pool.getConnection();
+  const table = req.body.table;
+  const connection = await pool.getConnection();
 
   try {
     // console.log('Executing Query:', query, 'With Values:', values);
     const results = await connection.execute(`SHOW COLUMNS FROM ${table}`);
 
-    const columnInfo = results[0].map(row => ({
+    const columnInfo = results[0].map((row) => ({
       Field: row["Field"],
-      Type: row["Type"]
-  }));
+      Type: row["Type"],
+    }));
     res.status(200).json(columnInfo);
   } catch (error) {
     res

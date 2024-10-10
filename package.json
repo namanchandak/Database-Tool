@@ -1,6 +1,6 @@
 {
   "name": "db-tool",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "description": "this is db tool for dice",
   "main": "index.js",
   "scripts": {
