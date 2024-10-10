@@ -18,6 +18,7 @@ const whereClause = require('./src/route/whereClause.router')
 const query = require('./src/route/query.route')
 const dbConfig = require('./src/route/dbConfig.route')
 const tableAttribute = require('./src/route/tableAttribute.route')
+const customFields = require('./src/route/customFields.route')
 
 
 app.use("/", serverRoute)
@@ -27,4 +28,5 @@ app.use("/jsonData", jsonData)
 app.use("/query", query)
 app.use("/dbConfig", dbConfig)
 app.use("/dbData", tableAttribute)
+app.use("/customFields", customFields)
 
