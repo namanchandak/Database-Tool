@@ -1,4 +1,4 @@
-const pool = require('../config/config');
+const pool = require("../config/config");
 
 const getDataType = async (columnItem) => {
   let dataTypeQuery = `SELECT DATA_TYPE
@@ -11,10 +11,8 @@ WHERE TABLE_NAME = '${columnItem[0]}' AND COLUMN_NAME = '${columnItem[1]}' AND T
     const [results] = await connection.execute(dataTypeQuery);
     const dataType = results[0].DATA_TYPE;
     return dataType;
-  } catch (error) {
-    
+  } catch (error) {}
 };
-}
 
 const getKeys = async (req, res) => {
   if (!req.body.columnItem || req.body.columnItem < 2) {
@@ -35,11 +33,10 @@ const getKeys = async (req, res) => {
 
   let query = `SELECT ${req.body.columnItem[1]} FROM ${req.body.columnItem[0]} limit 1`;
   const connection = await pool.getConnection();
-  const [jsonDataStructure] = await connection.query(query );
+  const [jsonDataStructure] = await connection.query(query);
 
-  console.log(query)
+  console.log(query);
   res.json(jsonDataStructure[0]);
-
 };
 
 const getValue = async (req, res) => {

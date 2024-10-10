@@ -1,14 +1,16 @@
 const express = require('express');
 const app = express();
 const cors = require("cors");
+const ReportToolDB = require('./src/config/ReportToolDB.config');
+
 
 app.use(cors({
-	origin: 'http://localhost:3000'
-  }));
+  origin: 'http://localhost:3000'
+}));
 app.use(express.json()); 
 
 app.listen(8080, () => { 
-    console.log("Server running on port 8080");
+  console.log("Server running on port 8080");
 });
 
 const serverRoute = require('./src/route/server.route')
@@ -30,3 +32,7 @@ app.use("/dbConfig", dbConfig)
 app.use("/dbData", tableAttribute)
 app.use("/customFields", customFields)
 
+ReportToolDB.connection.connect(function(err) {
+  if (err) throw err;
+  console.log("Connected to Report Tool DataBase!");
+});
